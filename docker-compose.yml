@@ -1,0 +1,46 @@
+version: '3.7'
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "4317:4317"
+      - "16686:16686"
+    networks:
+      - some-net
+  first-api:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    container_name: first-api
+    volumes:
+      - .:/api
+      - /api/obj/Debug/ 
+    command: >
+      /bin/sh -c "dotnet api/bin/Debug/net8.0/WebApplicationTest.dll"
+    env_file:
+      - .env
+    environment: 
+      - Jaeger__ServiceName=first-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - jaeger
+  # second-api:
+  #   container_name: second-api
+  #   image: mcr.microsoft.com/dotnet/sdk:8.0
+  #   env_file:
+  #     - .env
+  #   environment: 
+  #     - Jaeger__ServiceName=second-api
+  #   volumes:
+  #     - ./WebApplicationTest/:/etc/data
+  #     - /obj/Debug/
+  #   depends_on:
+  #     - jaeger
+  #   command: "dotnet run"
+  #   ports:
+  #     - "4000:5000"
+
+networks:
+  some-net:
+    driver: bridge
